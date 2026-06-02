@@ -5,6 +5,7 @@ import { useAuth } from './hooks/useAuth';
 import { useTransactions } from './hooks/useTransactions';
 import { useDarkMode } from './hooks/useDarkMode';
 import Auth from './components/Auth';
+import ResetPassword from './components/ResetPassword';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
@@ -23,7 +24,7 @@ import type { Transaction, TransactionFormData } from './types';
  * 5. If authenticated + returning user → Dashboard
  */
 export default function App() {
-  const { session, user, loading: authLoading, signOut } = useAuth();
+  const { session, user, loading: authLoading, signOut, isRecoveryMode, setIsRecoveryMode } = useAuth();
   const { isDark, toggleDarkMode } = useDarkMode();
 
   // Track user-selected currency preference (persisted in localStorage)
@@ -104,6 +105,16 @@ export default function App() {
   // ── Not authenticated ────────────────────────────────────
   if (!session) {
     return <Auth />;
+  }
+
+  // ── Password recovery mode ───────────────────────────────
+  if (isRecoveryMode) {
+    return (
+      <ResetPassword
+        onComplete={() => setIsRecoveryMode(false)}
+        onSignOut={signOut}
+      />
+    );
   }
 
   // Extract full name from user metadata (set during signup)

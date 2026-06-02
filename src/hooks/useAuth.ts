@@ -11,6 +11,7 @@ export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
   useEffect(() => {
     // Fetch the existing session on mount
@@ -23,10 +24,14 @@ export function useAuth() {
     // Subscribe to all future auth state changes (login, logout, token refresh)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       setLoading(false);
+
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoveryMode(true);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -35,7 +40,8 @@ export function useAuth() {
   /** Sign the user out and clear the local session */
   const signOut = async () => {
     await supabase.auth.signOut();
+    setIsRecoveryMode(false);
   };
 
-  return { session, user, loading, signOut };
+  return { session, user, loading, signOut, isRecoveryMode, setIsRecoveryMode };
 }

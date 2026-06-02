@@ -16,8 +16,10 @@ interface AuthFormData {
  * Signup includes full name and password confirmation fields.
  * Uses react-hook-form for validation and displays inline error/success messages.
  */
+type AuthMode = 'login' | 'signup' | 'forgot-password';
+
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -30,19 +32,19 @@ export default function Auth() {
     formState: { errors },
   } = useForm<AuthFormData>();
 
-  /** Handle login or signup via Supabase Auth */
+  /** Handle login, signup, or forgot password via Supabase Auth */
   const onSubmit = async (data: AuthFormData) => {
     setLoading(true);
     setError(null);
     setSuccess(null);
 
-    if (isLogin) {
+    if (mode === 'login') {
       const { error: authError } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
       if (authError) setError(authError.message);
-    } else {
+    } else if (mode === 'signup') {
       // Signup — pass full name as user metadata
       const { error: authError } = await supabase.auth.signUp({
         email: data.email,
@@ -56,17 +58,19 @@ export default function Auth() {
       } else {
         setSuccess('Check your email to confirm your account.');
       }
+    } else if (mode === 'forgot-password') {
+      // Send reset password email
+      const { error: authError } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: window.location.origin,
+      });
+      if (authError) {
+        setError(authError.message);
+      } else {
+        setSuccess('Password reset link sent! Check your email.');
+      }
     }
 
     setLoading(false);
-  };
-
-  /** Toggle between login and signup, clearing messages and form */
-  const toggleMode = () => {
-    setIsLogin((prev) => !prev);
-    setError(null);
-    setSuccess(null);
-    reset();
   };
 
   /* Shared input classes */
@@ -97,12 +101,18 @@ export default function Auth() {
 
           {/* Heading */}
           <h1 className="mb-1 text-center text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-            {isLogin ? 'Welcome back' : 'Create an account'}
+            {mode === 'login'
+              ? 'Welcome back'
+              : mode === 'signup'
+                ? 'Create an account'
+                : 'Reset your password'}
           </h1>
           <p className="mb-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
-            {isLogin
+            {mode === 'login'
               ? 'Sign in to manage your finances'
-              : 'Start tracking your spending today'}
+              : mode === 'signup'
+                ? 'Start tracking your spending today'
+                : 'Enter your email to receive a recovery link'}
           </p>
 
           {/* ── Inline messages ─────────────────────────────── */}
@@ -134,7 +144,7 @@ export default function Auth() {
           {/* ── Form ──────────────────────────────────────── */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Full Name (signup only) */}
-            {!isLogin && (
+            {mode === 'signup' && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -151,7 +161,7 @@ export default function Auth() {
                   <input
                     type="text"
                     {...register('fullName', {
-                      required: !isLogin ? 'Full name is required' : false,
+                      required: mode === 'signup' ? 'Full name is required' : false,
                     })}
                     className={inputCls}
                     placeholder="John Doe"
@@ -192,38 +202,56 @@ export default function Auth() {
             </div>
 
             {/* Password */}
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Password
-              </label>
-              <div className="relative">
-                <Lock
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"
-                  size={16}
-                />
-                <input
-                  type="password"
-                  {...register('password', {
-                    required: 'Password is required',
-                    minLength: {
-                      value: 6,
-                      message: 'Minimum 6 characters',
-                    },
-                  })}
-                  className={inputCls}
-                  placeholder="••••••••"
-                  id="auth-password"
-                />
+            {mode !== 'forgot-password' && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Password
+                  </label>
+                  {mode === 'login' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode('forgot-password');
+                        setError(null);
+                        setSuccess(null);
+                        reset();
+                      }}
+                      className="text-xs font-medium text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors cursor-pointer"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <Lock
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"
+                    size={16}
+                  />
+                  <input
+                    type="password"
+                    {...register('password', {
+                      required: 'Password is required',
+                      minLength: {
+                        value: 6,
+                        message: 'Minimum 6 characters',
+                      },
+                    })}
+                    className={inputCls}
+                    placeholder="••••••••"
+                    id="auth-password"
+                  />
+                </div>
+                {errors.password && (
+                  <p className="mt-1 text-xs text-rose-500">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
-              {errors.password && (
-                <p className="mt-1 text-xs text-rose-500">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
+            )}
 
             {/* Confirm Password (signup only) */}
-            {!isLogin && (
+            {mode === 'signup' && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -240,11 +268,8 @@ export default function Auth() {
                   <input
                     type="password"
                     {...register('confirmPassword', {
-                      required: !isLogin
-                        ? 'Please confirm your password'
-                        : false,
+                      required: 'Please confirm your password',
                       validate: (val) =>
-                        isLogin ||
                         val === watch('password') ||
                         'Passwords do not match',
                     })}
@@ -263,34 +288,58 @@ export default function Auth() {
 
             {/* Submit */}
             <button
-              type="submit"
-              disabled={loading}
-              id="auth-submit"
-              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 active:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:active:bg-zinc-300"
+               type="submit"
+               disabled={loading}
+               id="auth-submit"
+               className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 active:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:active:bg-zinc-300"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
               {loading
                 ? 'Processing…'
-                : isLogin
+                : mode === 'login'
                   ? 'Sign In'
-                  : 'Create Account'}
+                  : mode === 'signup'
+                    ? 'Create Account'
+                    : 'Send Reset Link'}
             </button>
           </form>
 
           {/* ── Toggle login / signup ─────────────────────── */}
           <div className="mt-6 border-t border-zinc-100 pt-6 dark:border-zinc-800">
-            <button
-              onClick={toggleMode}
-              className="w-full cursor-pointer text-center text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-              id="auth-toggle"
-            >
-              {isLogin
-                ? "Don't have an account? "
-                : 'Already have an account? '}
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                {isLogin ? 'Sign up' : 'Sign in'}
-              </span>
-            </button>
+            {mode === 'forgot-password' ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setError(null);
+                  setSuccess(null);
+                  reset();
+                }}
+                className="w-full cursor-pointer text-center text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
+                id="auth-toggle-back"
+              >
+                Back to Sign In
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(mode === 'login' ? 'signup' : 'login');
+                  setError(null);
+                  setSuccess(null);
+                  reset();
+                }}
+                className="w-full cursor-pointer text-center text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                id="auth-toggle"
+              >
+                {mode === 'login'
+                  ? "Don't have an account? "
+                  : 'Already have an account? '}
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                  {mode === 'login' ? 'Sign up' : 'Sign in'}
+                </span>
+              </button>
+            )}
           </div>
         </div>
 
