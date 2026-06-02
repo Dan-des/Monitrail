@@ -77,6 +77,31 @@ export default function Dashboard({
   // Budget Burn Rate
   const expensePercentageOfIncome = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
 
+  // Compute savings rate, top category, and average daily spend
+  const insights = useMemo(() => {
+    const savingsRate = totalIncome > 0 ? Math.round(((totalIncome - totalExpenses) / totalIncome) * 100) : 0;
+    const topCategory = categoryBreakdown.length > 0 ? categoryBreakdown[0] : null;
+    
+    let daysInMonth = 30; // Default fallback
+    if (transactions.length > 0) {
+      try {
+        const [yearStr, monthStr] = transactions[0].date.split('-');
+        const y = Number(yearStr);
+        const m = Number(monthStr);
+        if (!isNaN(y) && !isNaN(m)) {
+          daysInMonth = new Date(y, m, 0).getDate();
+        }
+      } catch {
+        daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+      }
+    } else {
+      daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+    }
+    const averageDailySpend = totalExpenses / daysInMonth;
+
+    return { savingsRate, topCategory, averageDailySpend };
+  }, [transactions, totalIncome, totalExpenses, categoryBreakdown]);
+
   const displayName = userName || userEmail.split('@')[0];
   const capitalizedName = displayName ? displayName.charAt(0).toUpperCase() + displayName.slice(1) : 'Guest';
 
@@ -153,6 +178,57 @@ export default function Dashboard({
           </p>
         </div>
       )}
+      {/* ── Monthly Insights ───────────────────────────────── */}
+      <div className="mt-6 rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
+        <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-3">
+          Monthly Financial Insights
+        </h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Savings Rate Card */}
+          <div className="rounded-xl bg-zinc-50/50 p-4 border border-zinc-100 dark:bg-zinc-800/40 dark:border-zinc-800/80">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 font-sans block mb-1">Savings Rate</span>
+            <span className={`text-base font-bold tabular-nums ${insights.savingsRate > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-900 dark:text-zinc-100'}`}>
+              {insights.savingsRate}%
+            </span>
+            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium leading-normal">
+              {insights.savingsRate > 0 
+                ? `You saved ${insights.savingsRate}% of your monthly income. Keep it up!` 
+                : totalIncome > 0 && totalExpenses > totalIncome
+                ? `Spent more than your income by ${Math.abs(insights.savingsRate)}% this month.`
+                : 'No savings recorded yet. Log income and expenses to track.'}
+            </p>
+          </div>
+
+          {/* Top Spending Card */}
+          <div className="rounded-xl bg-zinc-50/50 p-4 border border-zinc-100 dark:bg-zinc-800/40 dark:border-zinc-800/80">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 font-sans block mb-1">Top Category</span>
+            <span className="text-base font-bold text-zinc-900 dark:text-zinc-100 block truncate">
+              {insights.topCategory ? insights.topCategory.name : 'None'}
+            </span>
+            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium leading-normal">
+              {insights.topCategory 
+                ? `Most spent on ${insights.topCategory.name}: ${formatCurrency(insights.topCategory.amount, currencyCode)}.` 
+                : 'No expenses recorded this month.'}
+            </p>
+          </div>
+
+          {/* Daily Average Card */}
+          <div className="rounded-xl bg-zinc-50/50 p-4 border border-zinc-100 dark:bg-zinc-800/40 dark:border-zinc-800/80">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 font-sans block mb-1">Daily Average</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-base font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+                {formatCurrency(insights.averageDailySpend, currencyCode)}
+              </span>
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-normal">/ day</span>
+            </div>
+            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium leading-normal">
+              {totalExpenses > 0 
+                ? `Averages out to ${formatCurrency(insights.averageDailySpend, currencyCode)} per day for this month.` 
+                : 'No daily spending recorded yet.'}
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* ── Visual Analytics (Donut Chart & Breakdown) ───────── */}
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
