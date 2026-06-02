@@ -63,18 +63,6 @@ export default function App() {
     localStorage.getItem('monitrail-onboarding-complete') === 'true'
   );
 
-  const handlePrevMonth = useCallback(() => {
-    setCurrentDate(
-      (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
-    );
-  }, []);
-
-  const handleNextMonth = useCallback(() => {
-    setCurrentDate(
-      (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
-    );
-  }, []);
-
   const handleMonthChange = useCallback((newMonth: number) => {
     setCurrentDate(
       (prev) => new Date(prev.getFullYear(), newMonth, 1)
@@ -149,8 +137,6 @@ export default function App() {
       isDark={isDark}
       activeCurrency={activeCurrency}
       onCurrencyChange={handleCurrencyChange}
-      onPrevMonth={handlePrevMonth}
-      onNextMonth={handleNextMonth}
       onMonthChange={handleMonthChange}
       onYearChange={handleYearChange}
       onSignOut={signOut}

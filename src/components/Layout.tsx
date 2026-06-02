@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Wallet, LogOut, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
+import { LogOut, Sun, Moon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 interface LayoutProps {
@@ -11,8 +11,6 @@ interface LayoutProps {
   isDark: boolean;
   activeCurrency: string;
   onCurrencyChange: (currency: string) => void;
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
   onMonthChange: (month: number) => void;
   onYearChange: (year: number) => void;
   onSignOut: () => void;
@@ -32,8 +30,6 @@ export default function Layout({
   isDark,
   activeCurrency,
   onCurrencyChange,
-  onPrevMonth,
-  onNextMonth,
   onMonthChange,
   onYearChange,
   onSignOut,
@@ -55,9 +51,7 @@ export default function Layout({
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-zinc-900 p-2 shadow-sm dark:bg-white">
-                <Wallet className="text-white dark:text-zinc-900" size={20} />
-              </div>
+              <img src="/favicon.svg" className="h-8 w-8 rounded-lg shadow-sm" alt="Monitrail Logo" />
               <span className="hidden text-lg font-semibold tracking-tight text-zinc-900 sm:block dark:text-zinc-100">
                 Monitrail
               </span>
@@ -65,14 +59,6 @@ export default function Layout({
 
             {/* Month navigation */}
             <div className="flex items-center gap-1">
-              <button
-                onClick={onPrevMonth}
-                className="cursor-pointer rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                aria-label="Previous month"
-                id="nav-prev-month"
-              >
-                <ChevronLeft size={18} />
-              </button>
               <div className="flex items-center justify-center gap-0.5 min-w-[160px] text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                 {/* Month Dropdown */}
                 <select
@@ -111,14 +97,6 @@ export default function Layout({
                   })}
                 </select>
               </div>
-              <button
-                onClick={onNextMonth}
-                className="cursor-pointer rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                aria-label="Next month"
-                id="nav-next-month"
-              >
-                <ChevronRight size={18} />
-              </button>
             </div>
 
             {/* Right section: dark toggle, user, sign-out */}
