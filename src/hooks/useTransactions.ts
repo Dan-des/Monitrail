@@ -113,6 +113,35 @@ export function useTransactions(
     return { error: null };
   };
 
+  /**
+   * Update an existing transaction in Supabase and update local state.
+   */
+  const updateTransaction = async (
+    id: string,
+    formData: TransactionFormData
+  ): Promise<{ error: string | null }> => {
+    if (!userId) return { error: 'Not authenticated' };
+
+    const { data, error: updateError } = await supabase
+      .from('transactions')
+      .update(formData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) {
+      return { error: updateError.message };
+    }
+
+    setTransactions((prev) =>
+      prev
+        .map((t) => (t.id === id ? data : t))
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    );
+
+    return { error: null };
+  };
+
   // ── Derived totals ──────────────────────────────────────────
   const { totalIncome, totalExpenses, balance } = useMemo(() => {
     const income = transactions
@@ -138,6 +167,7 @@ export function useTransactions(
     totalExpenses,
     balance,
     addTransaction,
+    updateTransaction,
     deleteTransaction,
     refetch: fetchTransactions,
   };

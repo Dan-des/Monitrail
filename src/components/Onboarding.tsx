@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Sparkles, CheckCircle2, Loader2 } from 'lucide-react';
 import type { TransactionFormData } from '../types';
 import { CATEGORIES } from '../lib/categories';
+import { getCurrencySymbol } from '../lib/currency';
 
 interface OnboardingProps {
   userName: string;
   onComplete: () => void;
   onAddTransaction: (data: TransactionFormData) => Promise<{ error: string | null }>;
+  currencyCode?: string;
 }
 
 /** Slide transition variants for step changes */
@@ -30,6 +32,7 @@ export default function Onboarding({
   userName,
   onComplete,
   onAddTransaction,
+  currencyCode = 'NGN',
 }: OnboardingProps) {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -165,7 +168,7 @@ export default function Onboarding({
 
               <div className="relative mb-6">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-400">
-                  ₦
+                  {getCurrencySymbol(currencyCode)}
                 </span>
                 <input
                   type="number"
@@ -216,7 +219,7 @@ export default function Onboarding({
               <div className="space-y-4">
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-400">
-                    ₦
+                    {getCurrencySymbol(currencyCode)}
                   </span>
                   <input
                     type="number"

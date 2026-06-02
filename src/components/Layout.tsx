@@ -9,6 +9,8 @@ interface LayoutProps {
   currentMonth: number;
   currentYear: number;
   isDark: boolean;
+  activeCurrency: string;
+  onCurrencyChange: (currency: string) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onSignOut: () => void;
@@ -26,6 +28,8 @@ export default function Layout({
   currentMonth,
   currentYear,
   isDark,
+  activeCurrency,
+  onCurrencyChange,
   onPrevMonth,
   onNextMonth,
   onSignOut,
@@ -85,6 +89,21 @@ export default function Layout({
 
             {/* Right section: dark toggle, user, sign-out */}
             <div className="flex items-center gap-2">
+              {/* Currency selector */}
+              <select
+                value={activeCurrency}
+                onChange={(e) => onCurrencyChange(e.target.value)}
+                className="cursor-pointer rounded-lg border border-zinc-200 bg-transparent px-2 py-1.5 text-xs font-medium text-zinc-600 outline-none hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                aria-label="Select currency"
+                id="nav-currency-select"
+              >
+                <option value="NGN" className="dark:bg-zinc-900">₦ NGN</option>
+                <option value="USD" className="dark:bg-zinc-900">$ USD</option>
+                <option value="EUR" className="dark:bg-zinc-900">€ EUR</option>
+                <option value="GBP" className="dark:bg-zinc-900">£ GBP</option>
+                <option value="GHS" className="dark:bg-zinc-900">₵ GHS</option>
+              </select>
+
               {/* Dark mode toggle */}
               <button
                 onClick={onToggleDarkMode}
