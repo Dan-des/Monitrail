@@ -104,7 +104,7 @@ export default function App() {
 
   // ── Not authenticated ────────────────────────────────────
   if (!session) {
-    return <Auth />;
+    return <Auth isDark={isDark} onToggleDarkMode={toggleDarkMode} />;
   }
 
   // ── Password recovery mode ───────────────────────────────
@@ -113,6 +113,8 @@ export default function App() {
       <ResetPassword
         onComplete={() => setIsRecoveryMode(false)}
         onSignOut={signOut}
+        isDark={isDark}
+        onToggleDarkMode={toggleDarkMode}
       />
     );
   }

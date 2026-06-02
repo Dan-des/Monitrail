@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, Loader2, Lock, CheckCircle2 } from 'lucide-react';
+import { Wallet, Loader2, Lock, CheckCircle2, Sun, Moon } from 'lucide-react';
 
 interface ResetPasswordFormData {
   password: string;
@@ -12,6 +12,8 @@ interface ResetPasswordFormData {
 interface ResetPasswordProps {
   onComplete: () => void;
   onSignOut: () => Promise<void>;
+  isDark: boolean;
+  onToggleDarkMode: () => void;
 }
 
 /**
@@ -19,7 +21,7 @@ interface ResetPasswordProps {
  * Allows the user to set a new password, validates inputs, and updates the user's
  * password on Supabase.
  */
-export default function ResetPassword({ onComplete, onSignOut }: ResetPasswordProps) {
+export default function ResetPassword({ onComplete, onSignOut, isDark, onToggleDarkMode }: ResetPasswordProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -58,7 +60,16 @@ export default function ResetPassword({ onComplete, onSignOut }: ResetPasswordPr
     'w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 transition-all focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-zinc-500 dark:focus:ring-zinc-100/10 dark:placeholder:text-zinc-500';
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-4 dark:bg-zinc-950">
+    <div className="relative flex min-h-screen items-center justify-center bg-zinc-50 p-4 dark:bg-zinc-950">
+      {/* Dark Mode Toggle */}
+      <button
+        onClick={onToggleDarkMode}
+        className="absolute right-6 top-6 cursor-pointer rounded-xl border border-zinc-200 bg-white p-2.5 text-zinc-500 shadow-sm transition-colors hover:bg-zinc-50 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        aria-label="Toggle dark mode"
+      >
+        {isDark ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
+
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
