@@ -13,6 +13,8 @@ interface LayoutProps {
   onCurrencyChange: (currency: string) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
+  onMonthChange: (month: number) => void;
+  onYearChange: (year: number) => void;
   onSignOut: () => void;
   onToggleDarkMode: () => void;
 }
@@ -32,14 +34,11 @@ export default function Layout({
   onCurrencyChange,
   onPrevMonth,
   onNextMonth,
+  onMonthChange,
+  onYearChange,
   onSignOut,
   onToggleDarkMode,
 }: LayoutProps) {
-  const monthLabel = new Date(currentYear, currentMonth).toLocaleString(
-    'default',
-    { month: 'long', year: 'numeric' }
-  );
-
   /** Show user's name if available, otherwise fall back to email */
   const displayName = userName || userEmail;
 
@@ -74,9 +73,44 @@ export default function Layout({
               >
                 <ChevronLeft size={18} />
               </button>
-              <span className="min-w-[150px] text-center text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                {monthLabel}
-              </span>
+              <div className="flex items-center justify-center gap-0.5 min-w-[160px] text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                {/* Month Dropdown */}
+                <select
+                  value={currentMonth}
+                  onChange={(e) => onMonthChange(Number(e.target.value))}
+                  className="cursor-pointer bg-transparent py-1 px-1.5 focus:outline-none hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors border-0 outline-none"
+                  aria-label="Select month"
+                  id="nav-month-select"
+                >
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const name = new Date(0, i).toLocaleString('default', { month: 'long' });
+                    return (
+                      <option key={i} value={i} className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
+                        {name}
+                      </option>
+                    );
+                  })}
+                </select>
+
+                {/* Year Dropdown */}
+                <select
+                  value={currentYear}
+                  onChange={(e) => onYearChange(Number(e.target.value))}
+                  className="cursor-pointer bg-transparent py-1 px-1.5 focus:outline-none hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors border-0 outline-none"
+                  aria-label="Select year"
+                  id="nav-year-select"
+                >
+                  {/* Years 2020 to 2030 */}
+                  {Array.from({ length: 11 }, (_, i) => {
+                    const yr = 2020 + i;
+                    return (
+                      <option key={yr} value={yr} className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
+                        {yr}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
               <button
                 onClick={onNextMonth}
                 className="cursor-pointer rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"

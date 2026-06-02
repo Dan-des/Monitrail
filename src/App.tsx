@@ -75,6 +75,18 @@ export default function App() {
     );
   }, []);
 
+  const handleMonthChange = useCallback((newMonth: number) => {
+    setCurrentDate(
+      (prev) => new Date(prev.getFullYear(), newMonth, 1)
+    );
+  }, []);
+
+  const handleYearChange = useCallback((newYear: number) => {
+    setCurrentDate(
+      (prev) => new Date(newYear, prev.getMonth(), 1)
+    );
+  }, []);
+
   const handleAddClick = () => {
     setEditingTransaction(null);
     setIsFormOpen(true);
@@ -139,6 +151,8 @@ export default function App() {
       onCurrencyChange={handleCurrencyChange}
       onPrevMonth={handlePrevMonth}
       onNextMonth={handleNextMonth}
+      onMonthChange={handleMonthChange}
+      onYearChange={handleYearChange}
       onSignOut={signOut}
       onToggleDarkMode={toggleDarkMode}
     >
