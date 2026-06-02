@@ -13,6 +13,8 @@ interface DashboardProps {
   currencyCode?: string;
   categoryBudgets: Record<string, number>;
   onOpenBudgetModal: () => void;
+  userName: string;
+  userEmail: string;
 }
 
 /**
@@ -30,6 +32,8 @@ export default function Dashboard({
   currencyCode = 'NGN',
   categoryBudgets,
   onOpenBudgetModal,
+  userName,
+  userEmail,
 }: DashboardProps) {
   // Compute category totals and percentages for expenses
   const categoryBreakdown = useMemo(() => {
@@ -73,8 +77,20 @@ export default function Dashboard({
   // Budget Burn Rate
   const expensePercentageOfIncome = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
 
+  const displayName = userName || userEmail.split('@')[0];
+  const capitalizedName = displayName ? displayName.charAt(0).toUpperCase() + displayName.slice(1) : 'Guest';
+
   return (
     <section className="mb-8" id="dashboard-summary">
+      {/* Welcome Banner */}
+      <div className="mb-6">
+        <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">
+          Welcome back, {capitalizedName}!
+        </h2>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          Here is your monthly financial summary.
+        </p>
+      </div>
       {/* ── Summary cards ───────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
@@ -139,68 +155,68 @@ export default function Dashboard({
       )}
 
       {/* ── Visual Analytics (Donut Chart & Breakdown) ───────── */}
-      {transactions.some((tx) => tx.type === 'expense') && (
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
-          {/* Donut Chart */}
-          <div className="flex flex-col items-center justify-center p-4">
-            <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-4 self-start">
-              Expense Distribution
-            </h3>
-            <div className="relative flex items-center justify-center h-48 w-48">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 42 42">
-                {/* Background ring */}
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
+        {/* Donut Chart */}
+        <div className="flex flex-col items-center justify-center p-4">
+          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-4 self-start">
+            Expense Distribution
+          </h3>
+          <div className="relative flex items-center justify-center h-48 w-48">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 42 42">
+              {/* Background ring */}
+              <circle
+                cx="21"
+                cy="21"
+                r="15.91549430918954"
+                fill="transparent"
+                stroke="#e4e4e7"
+                className="dark:stroke-zinc-800"
+                strokeWidth="3.5"
+              />
+              
+              {/* Colored segments */}
+              {categorySegments.map((segment) => (
                 <circle
+                  key={segment.name}
                   cx="21"
                   cy="21"
                   r="15.91549430918954"
                   fill="transparent"
-                  stroke="#e4e4e7"
-                  className="dark:stroke-zinc-800"
+                  stroke={segment.color}
                   strokeWidth="3.5"
+                  strokeDasharray={`${segment.percentage} ${100 - segment.percentage}`}
+                  strokeDashoffset={segment.offset}
+                  className="transition-all duration-500 ease-in-out"
                 />
-                
-                {/* Colored segments */}
-                {categorySegments.map((segment) => (
-                  <circle
-                    key={segment.name}
-                    cx="21"
-                    cy="21"
-                    r="15.91549430918954"
-                    fill="transparent"
-                    stroke={segment.color}
-                    strokeWidth="3.5"
-                    strokeDasharray={`${segment.percentage} ${100 - segment.percentage}`}
-                    strokeDashoffset={segment.offset}
-                    className="transition-all duration-500 ease-in-out"
-                  />
-                ))}
-              </svg>
-              {/* Central text displaying total expense */}
-              <div className="absolute flex flex-col items-center justify-center text-center">
-                <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500 font-sans">Expenses</span>
-                <span className="text-base font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
-                  {formatCurrency(totalExpenses, currencyCode)}
-                </span>
-              </div>
+              ))}
+            </svg>
+            {/* Central text displaying total expense */}
+            <div className="absolute flex flex-col items-center justify-center text-center">
+              <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500 font-sans">Expenses</span>
+              <span className="text-base font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+                {formatCurrency(totalExpenses, currencyCode)}
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* Breakdown bars list */}
-          <div className="flex flex-col justify-center">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-                Breakdown by Category
-              </h3>
-              <button
-                onClick={onOpenBudgetModal}
-                className="cursor-pointer text-xs font-semibold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
-                id="btn-set-budgets"
-              >
-                Set Budgets
-              </button>
-            </div>
-            <div className="space-y-4 max-h-[220px] overflow-y-auto pr-1">
-              {categoryBreakdown.map((cat) => {
+        {/* Breakdown bars list */}
+        <div className="flex flex-col justify-center">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+              Breakdown by Category
+            </h3>
+            <button
+              onClick={onOpenBudgetModal}
+              className="cursor-pointer text-xs font-semibold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+              id="btn-set-budgets"
+            >
+              Set Budgets
+            </button>
+          </div>
+          <div className="space-y-4 max-h-[220px] overflow-y-auto pr-1">
+            {categoryBreakdown.length > 0 ? (
+              categoryBreakdown.map((cat) => {
                 const Icon = getCategoryIcon(cat.name);
                 const budget = categoryBudgets[cat.name];
                 const hasBudget = budget !== undefined && budget > 0;
@@ -246,11 +262,20 @@ export default function Dashboard({
                     </div>
                   </div>
                 );
-              })}
-            </div>
+              })
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  No expenses recorded this month.
+                </p>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">
+                  Click "Set Budgets" to plan your monthly limits.
+                </p>
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </section>
   );
 }

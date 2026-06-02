@@ -177,6 +177,8 @@ export default function App() {
             currencyCode={activeCurrency}
             categoryBudgets={categoryBudgets}
             onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
+            userName={userName}
+            userEmail={user?.email ?? ''}
           />
           <TransactionList
             transactions={transactions}

@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion';
+import { useState, type ReactNode } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Sun, Moon } from 'lucide-react';
-import type { ReactNode } from 'react';
 
 interface LayoutProps {
   children: ReactNode;
@@ -35,6 +35,8 @@ export default function Layout({
   onSignOut,
   onToggleDarkMode,
 }: LayoutProps) {
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+
   /** Show user's name if available, otherwise fall back to email */
   const displayName = userName || userEmail;
 
@@ -133,7 +135,7 @@ export default function Layout({
 
               {/* Sign out */}
               <button
-                onClick={onSignOut}
+                onClick={() => setShowSignOutConfirm(true)}
                 className="cursor-pointer rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                 title="Sign out"
                 id="nav-sign-out"
@@ -149,6 +151,57 @@ export default function Layout({
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {children}
       </main>
+      {/* Sign Out Confirmation Modal */}
+      <AnimatePresence>
+        {showSignOutConfirm && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="signout-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSignOutConfirm(false)}
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+            />
+            {/* Modal */}
+            <motion.div
+              key="signout-panel"
+              initial={{ opacity: 0, y: 40, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.98 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="fixed inset-x-4 bottom-4 z-50 rounded-2xl bg-white p-6 shadow-xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-sm sm:-translate-x-1/2 sm:-translate-y-1/2 dark:bg-zinc-900"
+            >
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                Sign Out
+              </h3>
+              <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                Are you sure you want to sign out of your account?
+              </p>
+              <div className="mt-6 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowSignOutConfirm(false)}
+                  className="cursor-pointer rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSignOutConfirm(false);
+                    onSignOut();
+                  }}
+                  className="cursor-pointer rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-rose-700 active:bg-rose-800"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

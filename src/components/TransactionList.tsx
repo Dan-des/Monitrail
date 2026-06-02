@@ -329,12 +329,12 @@ export default function TransactionList({
                             {formatCurrency(Number(tx.amount), currencyCode)}
                           </p>
 
-                          {/* Actions: Edit & Delete (visible on hover) */}
-                          <div className="flex shrink-0 items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                          {/* Actions: Edit & Delete */}
+                          <div className="flex shrink-0 items-center gap-1">
                             {/* Edit Button */}
                             <button
                               onClick={() => onEdit(tx)}
-                              className="cursor-pointer rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                              className="cursor-pointer rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                               title="Edit transaction"
                             >
                               <Pencil size={13} />
@@ -344,7 +344,7 @@ export default function TransactionList({
                             <button
                               onClick={() => handleDelete(tx.id)}
                               disabled={deletingId === tx.id}
-                              className="cursor-pointer rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:text-zinc-500 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
+                              className="cursor-pointer rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:text-zinc-400 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
                               title="Delete transaction"
                               aria-label={`Delete ${tx.description || tx.category}`}
                             >
