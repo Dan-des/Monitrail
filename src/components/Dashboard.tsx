@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Wallet, TrendingUp, TrendingDown } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, SlidersHorizontal } from 'lucide-react';
 import StatCard from './StatCard';
 import type { Transaction } from '../types';
 import { getCategoryIcon, getCategoryColor } from '../lib/categories';
@@ -208,10 +208,11 @@ export default function Dashboard({
             </h3>
             <button
               onClick={onOpenBudgetModal}
-              className="cursor-pointer text-xs font-semibold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+              className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-1.5 text-xs font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
               id="btn-set-budgets"
             >
-              Set Budgets
+              <SlidersHorizontal size={12} />
+              <span>Set Budgets</span>
             </button>
           </div>
           <div className="space-y-4 max-h-[220px] overflow-y-auto pr-1">
@@ -264,13 +265,17 @@ export default function Dashboard({
                 );
               })
             ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="flex flex-col items-center justify-center py-8 text-center animate-fade-in">
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                   No expenses recorded this month.
                 </p>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">
-                  Click "Set Budgets" to plan your monthly limits.
-                </p>
+                <button
+                  onClick={onOpenBudgetModal}
+                  className="mt-4 flex cursor-pointer items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-zinc-800 active:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:active:bg-zinc-300"
+                >
+                  <SlidersHorizontal size={13} />
+                  <span>Set Budgets</span>
+                </button>
               </div>
             )}
           </div>
