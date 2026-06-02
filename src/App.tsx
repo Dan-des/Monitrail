@@ -11,6 +11,7 @@ import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
 import TransactionList from './components/TransactionList';
 import Onboarding from './components/Onboarding';
+import BudgetModal from './components/BudgetModal';
 import type { Transaction, TransactionFormData } from './types';
 
 /**
@@ -26,6 +27,23 @@ import type { Transaction, TransactionFormData } from './types';
 export default function App() {
   const { session, user, loading: authLoading, signOut, isRecoveryMode, setIsRecoveryMode } = useAuth();
   const { isDark, toggleDarkMode } = useDarkMode();
+
+  // Track category budgets (persisted in localStorage)
+  const [categoryBudgets, setCategoryBudgets] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('monitrail-category-budgets');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+
+  const handleSaveBudgets = (budgets: Record<string, number>) => {
+    setCategoryBudgets(budgets);
+    localStorage.setItem('monitrail-category-budgets', JSON.stringify(budgets));
+  };
 
   // Track user-selected currency preference (persisted in localStorage)
   const [activeCurrency, setActiveCurrency] = useState(() =>
@@ -157,6 +175,8 @@ export default function App() {
             totalExpenses={totalExpenses}
             transactions={transactions}
             currencyCode={activeCurrency}
+            categoryBudgets={categoryBudgets}
+            onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
           />
           <TransactionList
             transactions={transactions}
@@ -188,6 +208,15 @@ export default function App() {
         onClose={() => setIsFormOpen(false)}
         onSubmit={handleFormSubmit}
         initialData={editingTransaction}
+        currencyCode={activeCurrency}
+      />
+
+      {/* Dialog Modal: Set Category Budgets */}
+      <BudgetModal
+        isOpen={isBudgetModalOpen}
+        onClose={() => setIsBudgetModalOpen(false)}
+        budgets={categoryBudgets}
+        onSave={handleSaveBudgets}
         currencyCode={activeCurrency}
       />
     </Layout>

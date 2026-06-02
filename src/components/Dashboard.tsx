@@ -11,6 +11,8 @@ interface DashboardProps {
   totalExpenses: number;
   transactions: Transaction[];
   currencyCode?: string;
+  categoryBudgets: Record<string, number>;
+  onOpenBudgetModal: () => void;
 }
 
 /**
@@ -26,6 +28,8 @@ export default function Dashboard({
   totalExpenses,
   transactions,
   currencyCode = 'NGN',
+  categoryBudgets,
+  onOpenBudgetModal,
 }: DashboardProps) {
   // Compute category totals and percentages for expenses
   const categoryBreakdown = useMemo(() => {
@@ -183,12 +187,26 @@ export default function Dashboard({
 
           {/* Breakdown bars list */}
           <div className="flex flex-col justify-center">
-            <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-4">
-              Breakdown by Category
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+                Breakdown by Category
+              </h3>
+              <button
+                onClick={onOpenBudgetModal}
+                className="cursor-pointer text-xs font-semibold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+                id="btn-set-budgets"
+              >
+                Set Budgets
+              </button>
+            </div>
             <div className="space-y-4 max-h-[220px] overflow-y-auto pr-1">
               {categoryBreakdown.map((cat) => {
                 const Icon = getCategoryIcon(cat.name);
+                const budget = categoryBudgets[cat.name];
+                const hasBudget = budget !== undefined && budget > 0;
+                const spentPercent = hasBudget ? (cat.amount / budget) * 100 : cat.percentage;
+                const isExceeded = hasBudget && cat.amount > budget;
+
                 return (
                   <div key={cat.name} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
@@ -196,9 +214,24 @@ export default function Dashboard({
                         <Icon size={12} style={{ color: cat.color }} />
                         <span>{cat.name}</span>
                       </div>
-                      <div className="flex items-center gap-2 font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums font-sans">
-                        <span>{formatCurrency(cat.amount, currencyCode)}</span>
-                        <span className="text-[10px] font-normal text-zinc-400">({cat.percentage.toFixed(0)}%)</span>
+                      <div className="flex items-center gap-1.5 font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums font-sans">
+                        {hasBudget ? (
+                          <>
+                            <span className={isExceeded ? 'text-rose-500 font-bold' : ''}>
+                              {formatCurrency(cat.amount, currencyCode)}
+                            </span>
+                            <span className="text-[10px] font-normal text-zinc-400">
+                              / {formatCurrency(budget, currencyCode)}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span>{formatCurrency(cat.amount, currencyCode)}</span>
+                            <span className="text-[10px] font-normal text-zinc-400">
+                              ({cat.percentage.toFixed(0)}%)
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                     {/* Progress indicator bar */}
@@ -206,8 +239,8 @@ export default function Dashboard({
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
-                          width: `${cat.percentage}%`,
-                          backgroundColor: cat.color,
+                          width: `${Math.min(spentPercent, 100)}%`,
+                          backgroundColor: isExceeded ? '#ef4444' : cat.color,
                         }}
                       />
                     </div>
