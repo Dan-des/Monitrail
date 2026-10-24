@@ -44,7 +44,7 @@ const checkIsSignUp = () => {
 function AuthCardSkeleton({ isSignUp }: { isSignUp: boolean }) {
   return (
     <div
-      className="w-full max-w-md rounded-2xl border border-zinc-200/80 bg-white p-7 sm:p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className="w-full max-w-[440px] rounded-2xl border border-zinc-200/80 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
       style={{ minHeight: isSignUp ? '560px' : '490px' }}
       aria-hidden="true"
     >
@@ -55,25 +55,25 @@ function AuthCardSkeleton({ isSignUp }: { isSignUp: boolean }) {
       </div>
 
       {/* Form field skeletons */}
-      <div className="mt-7 space-y-4">
+      <div className="mt-7 space-y-5">
         {isSignUp && (
           <div>
             <div className="mb-2 h-3.5 w-24 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-            <div className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 animate-pulse" />
+            <div className="h-[3.25rem] w-full rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 animate-pulse" />
           </div>
         )}
         <div>
           <div className="mb-2 h-3.5 w-28 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-          <div className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 animate-pulse" />
+          <div className="h-[3.25rem] w-full rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 animate-pulse" />
         </div>
         <div>
           <div className="mb-2 h-3.5 w-20 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-          <div className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 animate-pulse" />
+          <div className="h-[3.25rem] w-full rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 animate-pulse" />
         </div>
 
         {/* Primary button skeleton */}
         <div className="pt-2">
-          <div className="h-11 w-full rounded-xl bg-zinc-900/80 dark:bg-zinc-100/80 animate-pulse" />
+          <div className="h-[3.25rem] w-full rounded-xl bg-zinc-900/80 dark:bg-zinc-100/80 animate-pulse" />
         </div>
       </div>
 
@@ -128,15 +128,18 @@ export default function Auth({ isDark, onToggleDarkMode }: AuthProps) {
   const isClerkLoaded = clerk?.loaded ?? false;
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-zinc-50 p-4 dark:bg-zinc-950">
-      {/* Dark Mode Toggle */}
+    <div className="flex min-h-screen w-full flex-col items-center overflow-y-auto bg-zinc-50 px-4 py-6 dark:bg-zinc-950">
+      {/* Dark Mode Toggle — fixed top-right so it's always visible */}
       <button
         onClick={onToggleDarkMode}
-        className="absolute right-6 top-6 cursor-pointer rounded-xl border border-zinc-200 bg-white p-2.5 text-zinc-500 shadow-sm transition-colors hover:bg-zinc-50 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        className="fixed right-4 top-4 z-50 cursor-pointer rounded-xl border border-zinc-200 bg-white p-2.5 text-zinc-500 shadow-sm transition-colors hover:bg-zinc-50 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
         aria-label="Toggle dark mode"
       >
         {isDark ? <Sun size={18} /> : <Moon size={18} />}
       </button>
+
+      {/* Vertical spacer — pushes content toward centre when viewport is tall enough */}
+      <div className="flex-1" />
 
       {/* Monitrail Header / Logo */}
       <motion.div
@@ -153,8 +156,8 @@ export default function Auth({ isDark, onToggleDarkMode }: AuthProps) {
         </h1>
       </motion.div>
 
-      {/* Clerk Auth Component Container with stable geometry */}
-      <div className="w-full max-w-md min-h-[500px] sm:min-h-[540px] flex items-center justify-center">
+      {/* Clerk Auth Component Container */}
+      <div className="w-full max-w-[440px] flex items-center justify-center">
         {!isClerkLoaded ? (
           <AuthCardSkeleton isSignUp={isSignUp} />
         ) : (
@@ -194,6 +197,9 @@ export default function Auth({ isDark, onToggleDarkMode }: AuthProps) {
       <p className="mt-6 text-center text-xs text-zinc-400 dark:text-zinc-600">
         Your data is encrypted and protected
       </p>
+
+      {/* Vertical spacer — balances the top spacer for centering */}
+      <div className="flex-1" />
     </div>
   );
 }
