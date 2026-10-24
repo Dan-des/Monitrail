@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@clerk/backend": "^3.26.2",
+    "@neondatabase/serverless": "^1.2.0",
     "@supabase/supabase-js": "^2.106.2",
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.17.0",
@@ -23,6 +25,7 @@
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@vercel/node": "^27.0.2",
     "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.5.0",
     "eslint": "^10.3.0",
