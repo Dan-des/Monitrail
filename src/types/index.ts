@@ -1,4 +1,4 @@
-/** A single financial transaction stored in Supabase */
+/** A single financial transaction stored in the database */
 export interface Transaction {
   id: string;
   user_id: string;

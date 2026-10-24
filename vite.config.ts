@@ -55,7 +55,9 @@ export default defineConfig(({ mode }) => {
           ],
         },
       }),
-      // Local dev middleware to handle /api/transactions during `npm run dev`
+      // Local dev middleware: directly imports and delegates to the real
+      // Vercel serverless handler (/api/transactions.ts) via ssrLoadModule,
+      // ensuring zero logic or SQL duplication between dev and production.
       {
         name: 'vercel-api-dev-middleware',
         apply: 'serve',

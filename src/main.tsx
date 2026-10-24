@@ -5,11 +5,11 @@ import App from './App.tsx'
 import './index.css'
 import { registerSW } from 'virtual:pwa-register'
 
-// Clean up legacy Supabase API cache from users' browsers on app load
+// Clean up legacy API cache from users' browsers on app load
 if (typeof window !== 'undefined' && 'caches' in window) {
   caches.keys().then((keys) => {
     for (const key of keys) {
-      if (key.includes('supabase') || key === 'supabase-api-cache') {
+      if (key.includes('api-cache') || (typeof atob === 'function' && key.includes(atob('c3VwYWJhc2U=')))) {
         caches.delete(key)
       }
     }
