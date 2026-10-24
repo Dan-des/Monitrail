@@ -5,11 +5,19 @@ import App from './App.tsx'
 import './index.css'
 import { registerSW } from 'virtual:pwa-register'
 
-// Clean up legacy API cache from users' browsers on app load
+/**
+ * Legacy CacheStorage cleanup:
+ * Prior to the migration to Neon and Clerk, the PWA service worker cached financial API
+ * responses under the cache name 'supabase-api-cache'. To ensure users do not retain stale
+ * financial data in their browsers, we explicitly evict this legacy cache on app launch.
+ * (This is the one allowed exception to the codebase-wide "no supabase string" rule).
+ */
+const LEGACY_CACHE_NAME = 'supabase-api-cache'
+
 if (typeof window !== 'undefined' && 'caches' in window) {
   caches.keys().then((keys) => {
     for (const key of keys) {
-      if (key.includes('api-cache') || (typeof atob === 'function' && key.includes(atob('c3VwYWJhc2U=')))) {
+      if (key === LEGACY_CACHE_NAME || key.includes(LEGACY_CACHE_NAME)) {
         caches.delete(key)
       }
     }
