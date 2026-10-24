@@ -1,67 +1,130 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '@clerk/clerk-react';
 import type { Transaction, TransactionFormData } from '../types';
 
 /**
  * Custom hook for managing transactions for a specific user and month.
+ * Communicates with /api/transactions serverless endpoints backed by Neon Postgres.
  *
  * Provides CRUD operations, computed totals (income, expenses, balance),
- * and loading/error state.
+ * and handles Clerk token authorization and 401 session expiry.
  */
+// In-memory cache for transactions keyed by `${userId}:${year}-${month}`
+// Enables instant zero-wait month switching (SWR - Stale While Revalidate)
+const transactionsCache = new Map<string, Transaction[]>();
+
 export function useTransactions(
   userId: string | undefined,
   month: number,
   year: number
 ) {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { getToken, signOut } = useAuth();
+  const monthStr = String(month + 1).padStart(2, '0');
+  const cacheKey = userId ? `${userId}:${year}-${monthStr}` : '';
+
+  // Initialize immediately from cache if available, preventing loading flash
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    if (cacheKey && transactionsCache.has(cacheKey)) {
+      return transactionsCache.get(cacheKey)!;
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    return !cacheKey || !transactionsCache.has(cacheKey);
+  });
   const [error, setError] = useState<string | null>(null);
+
+  /** Handle 401 Unauthorized responses by clearing auth state and navigating to sign-in */
+  const handleUnauthorized = useCallback(async () => {
+    try {
+      localStorage.removeItem('monitrail-signed-in');
+      await signOut?.();
+    } catch {
+      // Ignore signOut errors during redirection
+    }
+    window.location.href = '/';
+  }, [signOut]);
 
   /**
    * Fetch all transactions for the given user + month/year window.
-   * Builds date range strings manually to avoid timezone issues with Date.toISOString().
+   * Uses isSilent to perform background revalidation without clearing UI.
    */
-  const fetchTransactions = useCallback(async () => {
+  const fetchTransactions = useCallback(async (isSilent = false) => {
     if (!userId) {
       setLoading(false);
       return;
     }
 
-    setLoading(true);
+    const currentKey = `${userId}:${year}-${monthStr}`;
+    const hasCached = transactionsCache.has(currentKey);
+
+    // Only show full loading indicator if we don't have cached data to display
+    if (!hasCached && !isSilent) {
+      setLoading(true);
+    }
     setError(null);
 
     // Build date range for the selected month (avoids timezone pitfalls)
-    const monthStr = String(month + 1).padStart(2, '0');
     const lastDay = new Date(year, month + 1, 0).getDate();
     const startDate = `${year}-${monthStr}-01`;
     const endDate = `${year}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
 
-    const { data, error: fetchError } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', userId)
-      .gte('date', startDate)
-      .lte('date', endDate)
-      .order('date', { ascending: false })
-      .order('created_at', { ascending: false });
+    try {
+      const token = await getToken();
+      if (!token) {
+        await handleUnauthorized();
+        return;
+      }
 
-    if (fetchError) {
-      setError(fetchError.message);
-      setTransactions([]);
-    } else {
-      setTransactions(data ?? []);
+      const res = await fetch(
+        `/api/transactions?startDate=${startDate}&endDate=${endDate}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.status === 401) {
+        await handleUnauthorized();
+        return;
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        setError(errorData.error || 'Failed to fetch transactions');
+        if (!hasCached) {
+          setTransactions([]);
+        }
+      } else {
+        const data: Transaction[] = (await res.json()) ?? [];
+        transactionsCache.set(currentKey, data);
+        setTransactions(data);
+      }
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Failed to fetch transactions');
+      if (!hasCached) {
+        setTransactions([]);
+      }
+    } finally {
+      setLoading(false);
     }
+  }, [userId, monthStr, year, getToken, handleUnauthorized]);
 
-    setLoading(false);
-  }, [userId, month, year]);
-
-  // Re-fetch whenever user/month/year changes
+  // Synchronize state and trigger background revalidation whenever user or month changes
   useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+    if (cacheKey && transactionsCache.has(cacheKey)) {
+      setTransactions(transactionsCache.get(cacheKey)!);
+      setLoading(false);
+      // Revalidate in background without blocking UI
+      fetchTransactions(true);
+    } else {
+      fetchTransactions(false);
+    }
+  }, [cacheKey, fetchTransactions]);
 
   /**
-   * Insert a new transaction into Supabase and update local state.
+   * Insert a new transaction via POST /api/transactions.
    * Returns `{ error: null }` on success or `{ error: string }` on failure.
    */
   const addTransaction = async (
@@ -69,52 +132,95 @@ export function useTransactions(
   ): Promise<{ error: string | null }> => {
     if (!userId) return { error: 'Not authenticated' };
 
-    const payload = {
-      ...formData,
-      user_id: userId,
-    };
+    try {
+      const token = await getToken();
+      if (!token) {
+        await handleUnauthorized();
+        return { error: 'Not authenticated' };
+      }
 
-    const { data, error: insertError } = await supabase
-      .from('transactions')
-      .insert(payload)
-      .select()
-      .single();
+      const res = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
 
-    if (insertError) {
-      return { error: insertError.message };
+      if (res.status === 401) {
+        await handleUnauthorized();
+        return { error: 'Unauthorized' };
+      }
+
+      const result = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        return { error: result.error || 'Failed to add transaction' };
+      }
+
+      // Add the new row, keeping descending-date sort and updating cache
+      setTransactions((prev) => {
+        const next = [result, ...prev].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        if (cacheKey) {
+          transactionsCache.set(cacheKey, next);
+        }
+        return next;
+      });
+
+      return { error: null };
+    } catch (err: unknown) {
+      return { error: (err as Error).message || 'Failed to add transaction' };
     }
-
-    // Optimistically add the new row, keeping descending-date sort
-    setTransactions((prev) =>
-      [data, ...prev].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      )
-    );
-
-    return { error: null };
   };
 
   /**
-   * Delete a transaction by ID and remove it from local state.
+   * Delete a transaction via DELETE /api/transactions?id=.
    */
   const deleteTransaction = async (
     id: string
   ): Promise<{ error: string | null }> => {
-    const { error: deleteError } = await supabase
-      .from('transactions')
-      .delete()
-      .eq('id', id);
+    try {
+      const token = await getToken();
+      if (!token) {
+        await handleUnauthorized();
+        return { error: 'Not authenticated' };
+      }
 
-    if (deleteError) {
-      return { error: deleteError.message };
+      const res = await fetch(`/api/transactions?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.status === 401) {
+        await handleUnauthorized();
+        return { error: 'Unauthorized' };
+      }
+
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        return { error: result.error || 'Failed to delete transaction' };
+      }
+
+      setTransactions((prev) => {
+        const next = prev.filter((t) => t.id !== id);
+        if (cacheKey) {
+          transactionsCache.set(cacheKey, next);
+        }
+        return next;
+      });
+      return { error: null };
+    } catch (err: unknown) {
+      return { error: (err as Error).message || 'Failed to delete transaction' };
     }
-
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
-    return { error: null };
   };
 
   /**
-   * Update an existing transaction in Supabase and update local state.
+   * Update an existing transaction via PATCH /api/transactions?id=.
    */
   const updateTransaction = async (
     id: string,
@@ -122,24 +228,47 @@ export function useTransactions(
   ): Promise<{ error: string | null }> => {
     if (!userId) return { error: 'Not authenticated' };
 
-    const { data, error: updateError } = await supabase
-      .from('transactions')
-      .update(formData)
-      .eq('id', id)
-      .select()
-      .single();
+    try {
+      const token = await getToken();
+      if (!token) {
+        await handleUnauthorized();
+        return { error: 'Not authenticated' };
+      }
 
-    if (updateError) {
-      return { error: updateError.message };
+      const res = await fetch(`/api/transactions?id=${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (res.status === 401) {
+        await handleUnauthorized();
+        return { error: 'Unauthorized' };
+      }
+
+      const result = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        return { error: result.error || 'Failed to update transaction' };
+      }
+
+      setTransactions((prev) => {
+        const next = prev
+          .map((t) => (t.id === id ? result : t))
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        if (cacheKey) {
+          transactionsCache.set(cacheKey, next);
+        }
+        return next;
+      });
+
+      return { error: null };
+    } catch (err: unknown) {
+      return { error: (err as Error).message || 'Failed to update transaction' };
     }
-
-    setTransactions((prev) =>
-      prev
-        .map((t) => (t.id === id ? data : t))
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    );
-
-    return { error: null };
   };
 
   // ── Derived totals ──────────────────────────────────────────

@@ -37,3 +37,84 @@ html {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #52525b;
 }
+
+/* ── Clerk Authentication Sizing & Typography ─────────────────── */
+
+/* Inputs: 1.0625rem (17px) font, 3.25rem height, medium weight */
+.cl-formFieldInput,
+.cl-formFieldInput input {
+  font-size: 1.0625rem !important;
+  line-height: 1.5 !important;
+  font-weight: 500 !important;
+  height: 3.25rem !important;
+  min-height: 3.25rem !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+/* Placeholders: same font-size as input text, readable colour */
+.cl-formFieldInput::placeholder,
+.cl-formFieldInput input::placeholder {
+  font-size: 1.0625rem !important;
+  line-height: 1.5 !important;
+  font-weight: 400 !important;
+  opacity: 1 !important;
+}
+
+:root:not(.dark) .cl-formFieldInput::placeholder,
+:root:not(.dark) .cl-formFieldInput input::placeholder {
+  color: #71717a !important; /* zinc-500 */
+}
+
+.dark .cl-formFieldInput::placeholder,
+.dark .cl-formFieldInput input::placeholder {
+  color: #a1a1aa !important; /* zinc-400 */
+}
+
+/* Autofill: keep font-size, weight and text colour identical to normal input */
+.cl-formFieldInput:-webkit-autofill,
+.cl-formFieldInput:-webkit-autofill:hover,
+.cl-formFieldInput:-webkit-autofill:focus,
+.cl-formFieldInput input:-webkit-autofill,
+.cl-formFieldInput input:-webkit-autofill:hover,
+.cl-formFieldInput input:-webkit-autofill:focus {
+  font-size: 1.0625rem !important;
+  font-weight: 500 !important;
+  -webkit-text-fill-color: #09090b !important; /* zinc-950 */
+  transition: background-color 5000s ease-in-out 0s;
+}
+.dark .cl-formFieldInput:-webkit-autofill,
+.dark .cl-formFieldInput:-webkit-autofill:hover,
+.dark .cl-formFieldInput:-webkit-autofill:focus,
+.dark .cl-formFieldInput input:-webkit-autofill,
+.dark .cl-formFieldInput input:-webkit-autofill:hover,
+.dark .cl-formFieldInput input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fafafa !important; /* zinc-50 */
+}
+
+/* Buttons: 3.25rem height */
+.cl-formButtonPrimary {
+  height: 3.25rem !important;
+  min-height: 3.25rem !important;
+}
+
+.cl-socialButtonsBlockButton {
+  height: 3.25rem !important;
+  min-height: 3.25rem !important;
+}
+
+/* ── Phone-width (320–430px) ──────────────────────────────────── */
+@media (max-width: 430px) {
+  .cl-card {
+    max-width: calc(100% - 32px) !important; /* 16px side margins */
+    padding: 1.5rem !important;
+  }
+  .cl-formFieldInput,
+  .cl-formFieldInput input {
+    font-size: 1rem !important; /* never below 16px */
+  }
+  .cl-formFieldInput::placeholder,
+  .cl-formFieldInput input::placeholder {
+    font-size: 1rem !important;
+  }
+}

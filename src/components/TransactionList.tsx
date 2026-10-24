@@ -153,12 +153,32 @@ export default function TransactionList({
   // ── Loading skeleton ──────────────────────────────────────
   if (loading) {
     return (
-      <div className="rounded-2xl border border-zinc-200/80 bg-white p-12 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-600 dark:border-zinc-700 dark:border-t-zinc-400" />
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Loading transactions…
-          </p>
+      <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
+        {/* Header Skeleton */}
+        <div className="border-b border-zinc-100 px-6 py-4 dark:border-zinc-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-5 w-28 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+              <div className="h-5 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800/60 animate-pulse" />
+            </div>
+            <div className="h-8 w-24 rounded-lg bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+          </div>
+        </div>
+
+        {/* Rows Skeleton */}
+        <div className="divide-y divide-zinc-100 px-6 py-2 dark:divide-zinc-800/60">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center justify-between py-3.5">
+              <div className="flex items-center gap-3.5">
+                <div className="h-10 w-10 rounded-xl bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                <div className="space-y-1.5">
+                  <div className="h-4 w-32 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                  <div className="h-3 w-20 rounded bg-zinc-100 dark:bg-zinc-800/60 animate-pulse" />
+                </div>
+              </div>
+              <div className="h-5 w-20 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+            </div>
+          ))}
         </div>
       </div>
     );
