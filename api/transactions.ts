@@ -2,9 +2,14 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { neon } from '@neondatabase/serverless';
 import { verifyToken } from '@clerk/backend';
 
-// ── Validation Helpers ────────────────────────────────────────────────────────
+// ── Validation Helpers (exported for standalone verification) ────────────────
 
-const isValidAmount = (val: unknown): boolean => {
+export const isValidUUID = (val: unknown): boolean => {
+  if (typeof val !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+};
+
+export const isValidAmount = (val: unknown): boolean => {
   if (typeof val === 'number') {
     return !isNaN(val) && isFinite(val) && val > 0;
   }
@@ -15,15 +20,15 @@ const isValidAmount = (val: unknown): boolean => {
   return false;
 };
 
-const isValidType = (val: unknown): boolean => {
+export const isValidType = (val: unknown): boolean => {
   return val === 'income' || val === 'expense';
 };
 
-const isValidCategory = (val: unknown): boolean => {
+export const isValidCategory = (val: unknown): boolean => {
   return typeof val === 'string' && val.trim().length > 0;
 };
 
-const isValidDateString = (val: unknown): boolean => {
+export const isValidDateString = (val: unknown): boolean => {
   if (typeof val !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(val)) {
     return false;
   }
@@ -118,7 +123,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'POST': {
         const body = getBody();
 
-        // user_id in body is completely ignored; only these fields are extracted:
+        // user_id in body is completely ignored; only allowable fields are extracted:
         const { amount, category, type, description, date } = body;
 
         // Validation: amount > 0, type is 'income'/'expense', non-empty category, valid YYYY-MM-DD
@@ -155,8 +160,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const body = getBody();
         const id = (req.query.id as string) || body.id;
 
-        if (!id || typeof id !== 'string') {
-          return res.status(400).json({ error: 'Transaction ID is required' });
+        // Check 1: ID must be a valid UUID before any database call
+        if (!id || !isValidUUID(id)) {
+          return res.status(400).json({ error: 'Valid UUID transaction ID is required' });
         }
 
         // Only allow updating: amount, category, type, description, date.
@@ -218,8 +224,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const body = getBody();
         const id = (req.query.id as string) || body.id;
 
-        if (!id || typeof id !== 'string') {
-          return res.status(400).json({ error: 'Transaction ID is required' });
+        // Check 1: ID must be a valid UUID before any database call
+        if (!id || !isValidUUID(id)) {
+          return res.status(400).json({ error: 'Valid UUID transaction ID is required' });
         }
 
         // If ID belongs to another user, 0 rows deleted, returns 404 and changes nothing
