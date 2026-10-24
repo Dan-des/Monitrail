@@ -5,7 +5,6 @@ import { useAuth } from './hooks/useAuth';
 import { useTransactions } from './hooks/useTransactions';
 import { useDarkMode } from './hooks/useDarkMode';
 import Auth from './components/Auth';
-import ResetPassword from './components/ResetPassword';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
@@ -25,7 +24,7 @@ import type { Transaction, TransactionFormData } from './types';
  * 5. If authenticated + returning user → Dashboard
  */
 export default function App() {
-  const { session, user, loading: authLoading, signOut, isRecoveryMode, setIsRecoveryMode } = useAuth();
+  const { session, user, isSignedIn, signOut } = useAuth();
   const { isDark, toggleDarkMode } = useDarkMode();
 
   // Track category budgets (persisted in localStorage)
@@ -111,8 +110,8 @@ export default function App() {
     }
   };
 
-  // ── Auth loading state ───────────────────────────────────
-  if (authLoading) {
+  // ── Auth loading state (only for active signed-in session while user profile is hydrating) ──
+  if (isSignedIn && !session) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
         <Loader2 className="animate-spin text-zinc-400" size={32} />
@@ -120,21 +119,9 @@ export default function App() {
     );
   }
 
-  // ── Not authenticated ────────────────────────────────────
+  // ── Not authenticated (renders Auth with skeleton immediately, zero delay or layout flash) ──
   if (!session) {
     return <Auth isDark={isDark} onToggleDarkMode={toggleDarkMode} />;
-  }
-
-  // ── Password recovery mode ───────────────────────────────
-  if (isRecoveryMode) {
-    return (
-      <ResetPassword
-        onComplete={() => setIsRecoveryMode(false)}
-        onSignOut={signOut}
-        isDark={isDark}
-        onToggleDarkMode={toggleDarkMode}
-      />
-    );
   }
 
   // Extract full name from user metadata (set during signup)

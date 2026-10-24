@@ -1,47 +1,37 @@
-import { useState, useEffect } from 'react';
-import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { useAuth as useClerkAuth, useUser } from '@clerk/clerk-react';
 
 /**
- * Custom hook that manages Supabase authentication state.
- * Subscribes to auth changes and provides the current session, user,
- * loading state, and a sign-out function.
+ * Custom hook that bridges Clerk authentication state for the application.
+ * Provides the current user, session, loading state, token getter, and sign-out function.
  */
 export function useAuth() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const { isLoaded: authLoaded, isSignedIn, userId, getToken, signOut } = useClerkAuth();
+  const { isLoaded: userLoaded, user: clerkUser } = useUser();
 
-  useEffect(() => {
-    // Fetch the existing session on mount
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setLoading(false);
-    });
+  const loading = !authLoaded || (isSignedIn && !userLoaded);
 
-    // Subscribe to all future auth state changes (login, logout, token refresh)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      setLoading(false);
-
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsRecoveryMode(true);
+  const user = clerkUser
+    ? {
+        id: clerkUser.id,
+        email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
+        user_metadata: {
+          full_name: clerkUser.fullName || clerkUser.firstName || '',
+        },
       }
-    });
+    : null;
 
-    return () => subscription.unsubscribe();
-  }, []);
+  const session = isSignedIn && user ? { user } : null;
 
-  /** Sign the user out and clear the local session */
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    setIsRecoveryMode(false);
+  return {
+    isLoaded: !loading,
+    loading,
+    isSignedIn: !!isSignedIn,
+    session,
+    user,
+    userId: userId ?? clerkUser?.id ?? null,
+    getToken,
+    signOut,
+    isRecoveryMode: false,
+    setIsRecoveryMode: () => {},
   };
-
-  return { session, user, loading, signOut, isRecoveryMode, setIsRecoveryMode };
 }

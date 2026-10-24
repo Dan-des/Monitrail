@@ -41,6 +41,18 @@ export const isValidDateString = (val: unknown): boolean => {
   );
 };
 
+// ── Database Connection Cache (reused across invocations) ────────────────────
+let cachedSql: ReturnType<typeof neon> | null = null;
+let cachedDbUrl: string | null = null;
+
+function getSql(databaseUrl: string) {
+  if (!cachedSql || cachedDbUrl !== databaseUrl) {
+    cachedSql = neon(databaseUrl);
+    cachedDbUrl = databaseUrl;
+  }
+  return cachedSql;
+}
+
 // ── Main Handler ─────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -73,8 +85,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  // 3. Connect to Neon Postgres
-  const sql = neon(databaseUrl);
+  // 3. Connect to Neon Postgres (reused connection)
+  const sql = getSql(databaseUrl);
 
   const getBody = () => {
     if (!req.body) return {};
@@ -100,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
 
           const rows = await sql`
-            SELECT id, user_id, amount, category, type, description, date, created_at
+            SELECT id, user_id, amount::float8 AS amount, category, type, description, date::text AS date, created_at
             FROM transactions
             WHERE user_id = ${userId}
               AND date >= ${String(startDate)}
@@ -111,7 +123,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const rows = await sql`
-          SELECT id, user_id, amount, category, type, description, date, created_at
+          SELECT id, user_id, amount::float8 AS amount, category, type, description, date::text AS date, created_at
           FROM transactions
           WHERE user_id = ${userId}
           ORDER BY date DESC, created_at DESC
@@ -149,7 +161,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ${description ? String(description).trim() : ''},
             ${String(date)}
           )
-          RETURNING id, user_id, amount, category, type, description, date, created_at
+          RETURNING id, user_id, amount::float8 AS amount, category, type, description, date::text AS date, created_at
         `;
 
         return res.status(201).json(created);
@@ -208,7 +220,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             date = COALESCE(${date !== undefined ? String(date) : null}, date)
           WHERE id = ${String(id)}
             AND user_id = ${userId}
-          RETURNING id, user_id, amount, category, type, description, date, created_at
+          RETURNING id, user_id, amount::float8 AS amount, category, type, description, date::text AS date, created_at
         `;
 
         // If ID belongs to another user (or does not exist), returns 404 and changes nothing

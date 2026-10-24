@@ -37,3 +37,42 @@ html {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #52525b;
 }
+
+/* ── Clerk Authentication Custom Typography & Input Rules ──────── */
+
+/* Strictly enforce minimum 16px font-size to prevent iOS Safari auto-zoom on input focus */
+.cl-formFieldInput,
+.cl-formFieldInput input {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  font-weight: 500 !important;
+  min-height: 48px !important;
+}
+
+/* Large, readable placeholders matching input font-size with strong contrast */
+.cl-formFieldInput::placeholder,
+.cl-formFieldInput input::placeholder {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  font-weight: 400 !important;
+  opacity: 1 !important;
+}
+
+:root:not(.dark) .cl-formFieldInput::placeholder,
+:root:not(.dark) .cl-formFieldInput input::placeholder {
+  color: #71717a !important; /* zinc-500: readable on zinc-50/white */
+}
+
+.dark .cl-formFieldInput::placeholder,
+.dark .cl-formFieldInput input::placeholder {
+  color: #a1a1aa !important; /* zinc-400: readable on zinc-800 */
+}
+
+/* Touch-friendly buttons (minimum 48px height) */
+.cl-formButtonPrimary {
+  min-height: 48px !important;
+}
+
+.cl-socialButtonsBlockButton {
+  min-height: 48px !important;
+}

@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Sun, Moon } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
+import { UserButton } from '@clerk/clerk-react';
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,7 +14,7 @@ interface LayoutProps {
   onCurrencyChange: (currency: string) => void;
   onMonthChange: (month: number) => void;
   onYearChange: (year: number) => void;
-  onSignOut: () => void;
+  onSignOut?: () => void;
   onToggleDarkMode: () => void;
 }
 
@@ -102,7 +103,7 @@ export default function Layout({
             </div>
 
             {/* Right section: dark toggle, user, sign-out */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {/* Currency selector */}
               <select
                 value={activeCurrency}
@@ -133,15 +134,16 @@ export default function Layout({
                 {displayName}
               </span>
 
-              {/* Sign out */}
-              <button
-                onClick={() => setShowSignOutConfirm(true)}
-                className="cursor-pointer rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                title="Sign out"
-                id="nav-sign-out"
-              >
-                <LogOut size={18} />
-              </button>
+              {/* Clerk UserButton */}
+              <div className="flex items-center">
+                <UserButton
+                  appearance={{
+                    elements: {
+                      userButtonAvatarBox: 'h-8 w-8',
+                    },
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -151,11 +153,11 @@ export default function Layout({
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {children}
       </main>
-      {/* Sign Out Confirmation Modal */}
+
+      {/* Sign Out Confirmation Modal (optional fallback if triggered) */}
       <AnimatePresence>
         {showSignOutConfirm && (
           <>
-            {/* Backdrop */}
             <motion.div
               key="signout-backdrop"
               initial={{ opacity: 0 }}
@@ -164,7 +166,6 @@ export default function Layout({
               onClick={() => setShowSignOutConfirm(false)}
               className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
             />
-            {/* Modal */}
             <motion.div
               key="signout-panel"
               initial={{ opacity: 0, y: 40, scale: 0.98 }}
@@ -191,7 +192,7 @@ export default function Layout({
                   type="button"
                   onClick={() => {
                     setShowSignOutConfirm(false);
-                    onSignOut();
+                    onSignOut?.();
                   }}
                   className="cursor-pointer rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-rose-700 active:bg-rose-800"
                 >
