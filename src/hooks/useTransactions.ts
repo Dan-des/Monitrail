@@ -37,6 +37,7 @@ export function useTransactions(
   /** Handle 401 Unauthorized responses by clearing auth state and navigating to sign-in */
   const handleUnauthorized = useCallback(async () => {
     try {
+      localStorage.removeItem('monitrail-signed-in');
       await signOut?.();
     } catch {
       // Ignore signOut errors during redirection

@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useAuth as useClerkAuth, useUser } from '@clerk/clerk-react';
 
 /**
@@ -5,8 +6,17 @@ import { useAuth as useClerkAuth, useUser } from '@clerk/clerk-react';
  * Provides the current user, session, loading state, token getter, and sign-out function.
  */
 export function useAuth() {
-  const { isLoaded: authLoaded, isSignedIn, userId, getToken, signOut } = useClerkAuth();
+  const { isLoaded: authLoaded, isSignedIn, userId, getToken, signOut: clerkSignOut } = useClerkAuth();
   const { isLoaded: userLoaded, user: clerkUser } = useUser();
+
+  const signOut = useCallback(async (...args: Parameters<typeof clerkSignOut>) => {
+    try {
+      localStorage.removeItem('monitrail-signed-in');
+    } catch {
+      // Ignore localStorage errors
+    }
+    return clerkSignOut(...args);
+  }, [clerkSignOut]);
 
   const loading = !authLoaded || (isSignedIn && !userLoaded);
 
